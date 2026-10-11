@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>قاعدة بيانات إدارة نخل التعليمية</title>
+<style>
+:root{--green:#145443;--gold:#c7a45b;--bg:#f4f7f5;--ink:#17231f}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Tahoma,Arial,sans-serif;color:var(--ink)}
+header{background:linear-gradient(120deg,#103d32,#1e6753);color:white;padding:28px 18px;border-bottom:5px solid var(--gold)}
+.wrap{max-width:1400px;margin:auto}h1{margin:0 0 8px;font-size:clamp(23px,4vw,34px)}header p{margin:0;color:#e6f0eb}
+main{max-width:1400px;margin:22px auto;padding:0 16px}.panel{background:white;border:1px solid #dce6e0;border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 4px 18px #163b2c0a}
+.note{background:#fff8e8;border-right:4px solid var(--gold);padding:12px 14px;border-radius:8px;line-height:1.8;font-size:14px}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-top:16px}
+label{display:block;font-size:13px;font-weight:bold;margin-bottom:6px;color:#365147}
+input,select,button{font:inherit;width:100%;padding:11px 12px;border:1px solid #cad8d0;border-radius:9px;background:#fff;color:var(--ink)}
+input:focus,select:focus{outline:2px solid #c7a45b66;border-color:var(--gold)}
+button{background:var(--green);color:white;border:0;font-weight:bold;cursor:pointer}button.secondary{background:#edf3ef;color:var(--green);border:1px solid #cbdad1}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.actions button{width:auto;min-width:130px}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}.stat{background:#edf4f0;padding:10px 14px;border-radius:10px;color:#194e3e}.stat strong{font-size:20px;margin-left:6px}
+.table-wrap{overflow:auto;max-height:65vh;border:1px solid #dfe8e2;border-radius:10px}table{border-collapse:collapse;width:100%;min-width:900px;background:white}th,td{padding:10px 12px;text-align:right;border-bottom:1px solid #e6ece8;white-space:nowrap;font-size:13px}th{position:sticky;top:0;background:#eaf2ed;color:#174b3b;z-index:1}tr:hover td{background:#f7faf8}.empty{text-align:center;padding:32px;color:#60766b}
+.small{font-size:12px;color:#60766b;line-height:1.7}.hidden{display:none}
+footer{text-align:center;padding:22px;color:#60766b;font-size:12px}
+@media(max-width:600px){main{padding:0 10px}.panel{padding:13px}.actions button{flex:1}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><h1>قاعدة بيانات إدارة نخل التعليمية</h1><p>بحث وفلاتر في جميع بيانات ملف Excel — مع الاحتفاظ بأسماء الأوراق وحقولها</p></div></header>
+<main>
+<section class="panel">
+ <div class="note"><b>الخصوصية:</b> هذا الموقع يعالج ملف Excel داخل متصفحك فقط؛ لا يرفع البيانات إلى خادم. لا تضع ملف الموظفين في مستودع GitHub عام لأن الملف قد يحتوي على أرقام قومية وبيانات وظيفية. ارفع الملف من جهازك عند الاستخدام.</div>
+ <div class="controls">
+  <div><label for="file">اختر ملف Excel</label><input id="file" type="file" accept=".xlsx,.xls,.xlsm"></div>
+  <div><label for="sheet">ورقة البيانات</label><select id="sheet" disabled><option>ارفع ملف Excel أولاً</option></select></div>
+  <div><label for="search">بحث باسم المعلم أو أي بيان</label><input id="search" placeholder="اكتب اسم المعلم أو الكود أو كلمة..." disabled></div>
+  <div><label for="school">اسم المدرسة / مكان العمل</label><select id="school" disabled><option value="">كل المدارس</option></select></div>
+  <div><label for="specialty">التخصص</label><select id="specialty" disabled><option value="">كل التخصصات</option></select></div>
+  <div><label for="stage">المرحلة</label><select id="stage" disabled><option value="">كل المراحل</option></select></div>
+  <div><label for="subject">مادة التدريس</label><select id="subject" disabled><option value="">كل المواد</option></select></div>
+ </div>
+ <div class="actions"><button id="clear" class="secondary" disabled>مسح الفلاتر</button><button id="export" disabled>تصدير النتائج CSV</button></div>
+ <p class="small">تُكتشف أسماء الأعمدة تلقائيًا قدر الإمكان. إذا لم يحتوِ الملف على عمود مستقل للمرحلة، سيظل البحث العام متاحًا لكل البيانات.</p>
+</section>
+<section class="panel">
+ <div class="stats"><div class="stat"><strong id="total">0</strong>سجل في الورقة</div><div class="stat"><strong id="shown">0</strong>نتيجة مطابقة</div><div class="stat"><strong id="sheetsCount">0</strong>ورقة محمّلة</div></div>
+ <div id="tableArea" class="table-wrap"><div class="empty">ارفع ملف Excel لعرض البيانات والبحث فيها.</div></div>
+</section>
+</main>
+<footer>قاعدة بيانات إدارة نخل التعليمية · معالجة محلية داخل المتصفح</footer>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+let workbook=null, currentRows=[], currentHeaders=[], currentSheet="";
+const ids=["sheet","search","school","specialty","stage","subject","clear","export"];
+function norm(s){return String(s??"").trim().toLowerCase().replace(/[أإآ]/g,"ا").replace(/[ة]/g,"ه").replace(/[ى]/g,"ي").replace(/\s+/g," ")}
+function findHeader(headers, candidates){return headers.find(h=>candidates.some(c=>norm(h).includes(norm(c))))||""}
+function cell(v){if(v===null||v===undefined)return "";if(v instanceof Date)return v.toLocaleDateString("ar-EG");return String(v).trim()}
+function uniqueValues(rows,header){if(!header)return [];return [...new Set(rows.map(r=>cell(r[header])).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"ar"))}
+function fillSelect(id, values, first){const el=$(id);el.innerHTML="";let o=document.createElement("option");o.value="";o.textContent=first;el.appendChild(o);values.forEach(v=>{let x=document.createElement("option");x.value=v;x.textContent=v;el.appendChild(x)});el.disabled=false}
+function enable(){ids.forEach(id=>$(id).disabled=false)}
+function headersFor(rows){return rows.length?Object.keys(rows[0]):[]}
+function detect(){return {
+ school:findHeader(currentHeaders,["مكان العمل","اسم المدرسة","المدرسة","المدرسه"]),
+ specialty:findHeader(currentHeaders,["التخصص على الكادر","التخصص","نوع التخصص"]),
+ stage:findHeader(currentHeaders,["المرحلة","المرحله","المرحلة التعليمية"]),
+ subject:findHeader(currentHeaders,["مادة التدريس","المادة","الماده"])
+}}
+function setSheet(name){currentSheet=name;const ws=workbook.Sheets[name];const raw=XLSX.utils.sheet_to_json(ws,{defval:"",raw:false});currentRows=raw.map(r=>{let clean={};for(const [k,v] of Object.entries(r)){let key=String(k).trim();if(key && !key.startsWith("__EMPTY"))clean[key]=cell(v)}return clean}).filter(r=>Object.values(r).some(v=>String(v).trim()!==""));currentHeaders=headersFor(currentRows);
+const d=detect();fillSelect("school",uniqueValues(currentRows,d.school),"كل المدارس / أماكن العمل");fillSelect("specialty",uniqueValues(currentRows,d.specialty),"كل التخصصات");fillSelect("stage",uniqueValues(currentRows,d.stage),"كل المراحل");fillSelect("subject",uniqueValues(currentRows,d.subject),"كل المواد");
+["search","clear","export"].forEach(id=>$(id).disabled=false);render()}
+function filtered(){const d=detect(), q=norm($("search").value);return currentRows.filter(r=>{
+if($("school").value && cell(r[d.school])!==$("school").value)return false;
+if($("specialty").value && cell(r[d.specialty])!==$("specialty").value)return false;
+if($("stage").value && cell(r[d.stage])!==$("stage").value)return false;
+if($("subject").value && cell(r[d.subject])!==$("subject").value)return false;
+if(q&&!Object.values(r).some(v=>norm(v).includes(q)))return false;return true})}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function render(){const rows=filtered();$("total").textContent=currentRows.length;$("shown").textContent=rows.length;$("sheetsCount").textContent=workbook?workbook.SheetNames.length:0;
+if(!currentHeaders.length||!rows.length){$("tableArea").innerHTML='<div class="empty">لا توجد نتائج مطابقة للفلاتر الحالية.</div>';return}
+const heads=currentHeaders;$("tableArea").innerHTML='<table><thead><tr>'+heads.map(h=>'<th>'+esc(h)+'</th>').join("")+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+heads.map(h=>'<td>'+esc(cell(r[h]))+'</td>').join("")+'</tr>').join("")+'</tbody></table>'}
+$("file").addEventListener("change",async e=>{const f=e.target.files[0];if(!f)return;try{const buf=await f.arrayBuffer();workbook=XLSX.read(buf,{type:"array",cellDates:true});$("sheet").innerHTML="";workbook.SheetNames.forEach(n=>{const o=document.createElement("option");o.value=n;o.textContent=n;$("sheet").appendChild(o)});$("sheet").disabled=false;enable();setSheet(workbook.SheetNames[0])}catch(err){alert("تعذر قراءة الملف. تأكد أنه ملف Excel صالح.")}});
+$("sheet").addEventListener("change",()=>setSheet($("sheet").value));
+["search","school","specialty","stage","subject"].forEach(id=>$(id).addEventListener(id==="search"?"input":"change",render));
+$("clear").addEventListener("click",()=>{["search","school","specialty","stage","subject"].forEach(id=>$(id).value="");render()});
+$("export").addEventListener("click",()=>{const rows=filtered();if(!rows.length)return;const csv=[currentHeaders,...rows.map(r=>currentHeaders.map(h=>cell(r[h])))].map(row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(",")).join("\r\n");const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8;"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="نتائج_البحث.csv";a.click();URL.revokeObjectURL(a.href)});
+</script>
+</body></html>
